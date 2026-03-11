@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 协作方式
 
-当用户提出问题时，**优先提供解决方案、思路或建议供用户参考，而不是直接修改代码**。如需写代码，应先征得用户明确同意。
+可以直接编写和修改代码，无需事先征得用户同意。
 
 ## Commands
 

@@ -7,4 +7,5 @@ class Categories extends Table {
   IntColumn get color => integer()();
   TextColumn get type => text()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+  
 }
