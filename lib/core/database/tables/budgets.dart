@@ -7,4 +7,9 @@ class Budgets extends Table {
   RealColumn get totalAmount => real()();
   IntColumn get categoryId =>
       integer().nullable().references(Categories, #id)();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {month, categoryId},
+      ];
 }
