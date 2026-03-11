@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:accounting_book/app.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -52,6 +53,20 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+          _SectionTitle('功能'),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.category_outlined),
+                  title: const Text('分类管理'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/categories'),
+                ),
+              ],
             ),
           ),
           _SectionTitle('关于'),

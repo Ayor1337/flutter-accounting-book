@@ -9,6 +9,7 @@ import 'package:accounting_book/features/transaction/add/add_transaction_page.da
 import 'package:accounting_book/features/budget/budget_page.dart';
 import 'package:accounting_book/features/analytics/analytics_page.dart';
 import 'package:accounting_book/features/settings/settings_page.dart';
+import 'package:accounting_book/features/settings/category_management_page.dart';
 
 final themeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
@@ -58,6 +59,12 @@ final _router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsPage(),
+      routes: [
+        GoRoute(
+          path: 'categories',
+          builder: (context, state) => const CategoryManagementPage(),
+        ),
+      ],
     ),
   ],
 );
