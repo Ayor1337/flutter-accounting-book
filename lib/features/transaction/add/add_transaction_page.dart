@@ -45,15 +45,17 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     setState(() => _isLoading = true);
     try {
       final db = ref.read(appDatabaseProvider);
-      final result = await (db.select(db.transactions)
-            ..where((t) => t.id.equals(widget.transactionId!)))
-          .getSingleOrNull();
+      final result = await (db.select(
+        db.transactions,
+      )..where((t) => t.id.equals(widget.transactionId!))).getSingleOrNull();
 
       if (result != null && mounted) {
         // 加载对应分类
         final categoryDao = ref.read(categoryDaoProvider);
         final allCategories = await categoryDao.getAllCategories();
-        final Category? category = allCategories.where((c) => c.id == result.categoryId).firstOrNull;
+        final Category? category = allCategories
+            .where((c) => c.id == result.categoryId)
+            .firstOrNull;
 
         setState(() {
           _selectedType = result.type;
@@ -108,6 +110,15 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     });
   }
 
+  void _closePage() {
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/transactions');
+  }
+
   Future<void> _onConfirm() async {
     // 验证金额
     final amount = double.tryParse(_amountStr);
@@ -140,19 +151,20 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       } else {
         await transactionDao.insertTransaction(companion);
       }
-
-      if (mounted) context.pop();
     } catch (e) {
       if (mounted) _showSnackBar('保存失败：$e');
+      return;
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+
+    _closePage();
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _pickDate() async {
@@ -176,7 +188,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
         title: Text(_isEditMode ? '编辑记录' : '记账'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          onPressed: _closePage,
         ),
       ),
       body: _isLoading
@@ -278,7 +290,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  DateFormat('yyyy年MM月dd日').format(_selectedDate),
+                                  DateFormat(
+                                    'yyyy年MM月dd日',
+                                  ).format(_selectedDate),
                                   style: TextStyle(
                                     fontSize: 15,
                                     color: colorScheme.onSurface,
