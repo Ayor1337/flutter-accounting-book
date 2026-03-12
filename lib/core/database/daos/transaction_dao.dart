@@ -17,6 +17,9 @@ class TransactionWithCategory {
 }
 
 @DriftAccessor(tables: [Transactions, Categories])
+/// 交易相关的读写入口。
+/// 业务层只和 DAO 交互，不直接拼 SQL，这样页面只关注“要什么数据”，
+/// 不必关心 SQLite 查询细节。
 class TransactionDao extends DatabaseAccessor<AppDatabase>
     with _$TransactionDaoMixin {
   TransactionDao(super.db);
@@ -50,6 +53,8 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   Stream<({double income, double expense})> getMonthlySummary(String month) {
     final (start, end) = _monthRange(month);
 
+    // 汇总查询只返回“收入”“支出”两组结果，再在 Dart 里整理成具名记录，
+    // 这样 UI 读取时可以直接使用 summary.income / summary.expense。
     final incomeExpr = transactions.amount.sum();
     final query = selectOnly(transactions)
       ..addColumns([transactions.type, incomeExpr])
@@ -137,7 +142,8 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     final (start, end) = _monthRange(month);
 
     // SQLite 中 Drift 将 DateTime 存为 Unix 时间戳（整数秒）或 ISO 字符串。
-    // 使用 customSelect 以便直接用 strftime 格式化日期。
+    // 这里使用 customSelect，是为了直接在 SQL 层按天格式化和聚合，
+    // 减少把整月数据拉回 Dart 再二次分组的成本。
     final rows = await customSelect(
       'SELECT strftime(\'%Y-%m-%d\', date / 1000, \'unixepoch\') AS day, '
       'SUM(amount) AS total '
@@ -169,7 +175,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   ) async {
     if (months.isEmpty) return {};
 
-    // 构建每个月的范围条件，用 strftime 提取 'YYYY-MM' 与目标列表比对
+    // 一次查多个月份，供趋势图等场景复用，避免页面为每个月单独发起查询。
     final placeholders = months.map((_) => '?').join(', ');
     final rows = await customSelect(
       'SELECT strftime(\'%Y-%m\', date / 1000, \'unixepoch\') AS month_key, '

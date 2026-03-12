@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// 自定义数字键盘。
+/// 记账页不直接使用系统键盘，而是通过这个组件统一金额输入交互。
 class NumberKeyboard extends StatelessWidget {
   final void Function(String digit) onInput;
   final VoidCallback onDelete;
@@ -44,6 +46,7 @@ class NumberKeyboard extends StatelessWidget {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
+            key: const Key('number-key-confirm'),
             onPressed: onConfirm,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -87,12 +90,20 @@ class NumberKeyboard extends StatelessWidget {
     IconData? icon,
     required VoidCallback onTap,
   }) {
+    // 这些 key 主要给测试使用，便于精确点击某个数字键或删除键。
+    final key = switch ((label, icon)) {
+      (final digit?, _) => Key('number-key-$digit'),
+      (_, Icons.backspace_outlined) => const Key('number-key-delete'),
+      _ => null,
+    };
+
     return SizedBox(
       height: 52,
       child: Material(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
+          key: key,
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Center(

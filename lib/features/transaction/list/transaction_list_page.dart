@@ -7,6 +7,8 @@ import 'package:accounting_book/core/utils/date_utils.dart';
 import 'package:accounting_book/features/transaction/list/providers/transaction_list_providers.dart';
 import 'package:accounting_book/features/transaction/list/widgets/transaction_day_group.dart';
 
+/// 账单列表页。
+/// 负责切换月份、订阅当月账单，并按天分组后交给子组件展示。
 class TransactionListPage extends ConsumerWidget {
   const TransactionListPage({super.key});
 
@@ -47,6 +49,7 @@ class TransactionListPage extends ConsumerWidget {
       body: transactionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('加载失败：$err')),
+        // 数据准备好后，再进入按天分组的纯展示逻辑。
         data: (transactions) => _buildBody(context, ref, transactions),
       ),
     );
@@ -79,7 +82,7 @@ class TransactionListPage extends ConsumerWidget {
       );
     }
 
-    // 按日期分组
+    // 先把同一天的记录归并起来，后面才能渲染“日期标题 + 当天多条记录”的结构。
     final grouped = <DateTime, List<TransactionWithCategory>>{};
     for (final twc in transactions) {
       final date = DateTime(
@@ -90,7 +93,7 @@ class TransactionListPage extends ConsumerWidget {
       grouped.putIfAbsent(date, () => []).add(twc);
     }
 
-    // 按日期降序排列
+    // 分组后再排序，保证列表从新到旧展示。
     final sortedDates = grouped.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 

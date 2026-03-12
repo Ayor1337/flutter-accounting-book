@@ -21,8 +21,10 @@ IconData _iconDataFor(String icon) {
   return _iconMap[icon] ?? Icons.category;
 }
 
-class CategoryPicker extends ConsumerWidget {
-  final String type; // 'income' 或 'expense'
+/// 分类选择器。
+/// 它根据收入/支出类型监听不同分类列表，并把选中结果回传给父组件。
+class CategoryPicker extends ConsumerStatefulWidget {
+  final String type;
   final int? selectedId;
   final void Function(Category category) onSelected;
 
@@ -34,12 +36,39 @@ class CategoryPicker extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final categoryDao = ref.watch(categoryDaoProvider);
+  ConsumerState<CategoryPicker> createState() => _CategoryPickerState();
+}
+
+class _CategoryPickerState extends ConsumerState<CategoryPicker> {
+  // 缓存当前类型对应的流，避免 build 时重复创建 Stream。
+  late Stream<List<Category>> _categoriesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesStream = _watchCategories(widget.type);
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type) {
+      // 类型变化时切换到另一条分类流，例如“支出”切到“收入”。
+      _categoriesStream = _watchCategories(widget.type);
+    }
+  }
+
+  Stream<List<Category>> _watchCategories(String type) {
+    final categoryDao = ref.read(categoryDaoProvider);
+    return categoryDao.watchCategoriesByType(type);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return StreamBuilder<List<Category>>(
-      stream: categoryDao.watchCategoriesByType(type),
+      stream: _categoriesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
@@ -51,12 +80,10 @@ class CategoryPicker extends ConsumerWidget {
         final categoryList = snapshot.data ?? [];
 
         if (categoryList.isEmpty) {
-          return const SizedBox(
-            height: 80,
-            child: Center(child: Text('暂无分类')),
-          );
+          return const SizedBox(height: 80, child: Center(child: Text('暂无分类')));
         }
 
+        // 这里用不可滚动 GridView，是为了把它嵌进父级滚动区域而不产生手势冲突。
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -69,11 +96,11 @@ class CategoryPicker extends ConsumerWidget {
           itemCount: categoryList.length,
           itemBuilder: (context, index) {
             final category = categoryList[index];
-            final isSelected = category.id == selectedId;
+            final isSelected = category.id == widget.selectedId;
             final categoryColor = Color(category.color);
 
             return GestureDetector(
-              onTap: () => onSelected(category),
+              onTap: () => widget.onSelected(category),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

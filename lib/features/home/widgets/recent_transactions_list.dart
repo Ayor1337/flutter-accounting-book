@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:accounting_book/core/database/app_database.dart';
 import 'package:accounting_book/core/utils/currency_formatter.dart';
 import 'package:accounting_book/core/utils/date_utils.dart';
+import 'package:flutter/material.dart';
 
+/// 首页最近记录列表。
+/// 数据已由上层 Provider 整理好，这里只负责“空状态”和“记录项”两种展示。
 class RecentTransactionsList extends StatelessWidget {
   final List<Transaction> transactions;
 
@@ -14,22 +16,26 @@ class RecentTransactionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
+      // 空状态单独处理，让首页在没有数据时仍保持可读。
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 48,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 8),
-            Text(
-              '暂无记录',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-          ],
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.receipt_long_outlined,
+                size: 48,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 8),
+              Text(
+                '暂无记录',
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ],
+          ),
         ),
       );
     }

@@ -7,7 +7,8 @@ import 'package:accounting_book/core/utils/date_utils.dart';
 final transactionListMonthProvider =
     StateProvider<String>((ref) => currentMonth());
 
-// 按月监听交易列表（含分类信息）
+// 账单页主数据源。
+// DAO 已经把 transactions 和 categories 联表，页面拿到后可以直接渲染分类信息。
 final transactionsByMonthProvider = StreamProvider.autoDispose
     .family<List<TransactionWithCategory>, String>((ref, month) {
   return ref

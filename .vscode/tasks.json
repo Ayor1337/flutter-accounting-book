@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "launch-android-emulator",
+            "type": "shell",
+            "command": "$ErrorActionPreference = 'Stop'; $emulatorName = 'Pixel_9'; $timeoutSeconds = 300; $pollSeconds = 2; $serial = (& adb devices | Select-String '^emulator-\\d+\\s+device$' | ForEach-Object { ($_ -split '\\s+')[0] } | Select-Object -First 1); if (-not $serial) { Write-Host \"Starting Android emulator '$emulatorName'...\"; flutter emulators --launch $emulatorName; } $deadline = (Get-Date).AddSeconds($timeoutSeconds); do { $serial = (& adb devices | Select-String '^emulator-\\d+\\s+device$' | ForEach-Object { ($_ -split '\\s+')[0] } | Select-Object -First 1); if ($serial) { break }; Start-Sleep -Seconds $pollSeconds; } while ((Get-Date) -lt $deadline); if (-not $serial) { throw \"No Android emulator device detected within ${timeoutSeconds}s.\"; } do { $bootCompleted = (& adb -s $serial shell getprop sys.boot_completed).Trim(); if ($bootCompleted -eq '1') { break }; Start-Sleep -Seconds $pollSeconds; } while ((Get-Date) -lt $deadline); if ($bootCompleted -ne '1') { throw \"Emulator '$serial' did not finish booting within ${timeoutSeconds}s.\"; } Write-Host \"Android emulator '$serial' is ready.\";",
+            "options": {
+                "shell": {
+                    "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "args": [
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-Command"
+                    ]
+                }
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        }
+    ]
+}

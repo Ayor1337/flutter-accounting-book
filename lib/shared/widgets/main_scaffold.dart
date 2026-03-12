@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// 承载底部导航的外壳。
+/// 真正的页面内容由 navigationShell 管理，这里只负责把它和 NavigationBar
+/// 组合在一起。
 class MainScaffold extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -13,6 +16,7 @@ class MainScaffold extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
+          // 重新点当前 tab 时回到该分支的初始路由，符合常见移动端导航习惯。
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,

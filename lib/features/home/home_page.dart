@@ -6,14 +6,21 @@ import 'package:accounting_book/features/home/providers/home_providers.dart';
 import 'package:accounting_book/features/home/widgets/monthly_summary_card.dart';
 import 'package:accounting_book/features/home/widgets/recent_transactions_list.dart';
 
+/// 首页负责把“月份状态”“当月汇总”“最近记录”三条数据线组合成一个页面。
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 这三个 watch 可以视为首页的数据入口：
+    // 1. 当前选中的月份
+    // 2. 该月份的汇总流
+    // 3. 全局最近 5 条记录
     final month = ref.watch(homeMonthProvider);
     final summaryAsync = ref.watch(monthlySummaryProvider(month));
     final recentAsync = ref.watch(recentTransactionsProvider);
+    final summaryError =
+        summaryAsync.hasError ? summaryAsync.error.toString() : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -21,7 +28,7 @@ class HomePage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.go('/settings'),
+            onPressed: () => context.push('/settings'),
             tooltip: '设置',
           ),
         ],
@@ -30,36 +37,21 @@ class HomePage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 月度收支卡片
-            summaryAsync.when(
-              loading: () => const SizedBox(
-                height: 180,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('加载失败：$e'),
-                  ),
-                ),
-              ),
-              data: (summary) => MonthlySummaryCard(
-                month: month,
-                summary: summary,
-                onPreviousMonth: () {
-                  ref.read(homeMonthProvider.notifier).state =
-                      previousMonth(month);
-                },
-                onNextMonth: () {
-                  ref.read(homeMonthProvider.notifier).state =
-                      nextMonth(month);
-                },
-              ),
+            // 汇总卡片本身不直接处理 AsyncValue，而是由页面把加载/错误/数据
+            // 三种状态拆开后传进去，卡片组件就能保持纯展示职责。
+            MonthlySummaryCard(
+              month: month,
+              summary: summaryAsync.valueOrNull,
+              isLoading: summaryAsync.isLoading,
+              errorMessage: summaryError,
+              onPreviousMonth: () {
+                ref.read(homeMonthProvider.notifier).state = previousMonth(month);
+              },
+              onNextMonth: () {
+                ref.read(homeMonthProvider.notifier).state = nextMonth(month);
+              },
             ),
 
-            // 最近记录标题
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -71,7 +63,7 @@ class HomePage extends ConsumerWidget {
               ),
             ),
 
-            // 最近交易列表
+            // 最近记录继续保留 AsyncValue.when，让页面在这里完成状态分支。
             recentAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(32),
